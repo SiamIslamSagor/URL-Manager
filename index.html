@@ -1,0 +1,1262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>URL Categorizer & Duplicate Manager</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #f5f7fb;
+        color: #1f2937;
+        font-family: Inter, Arial, sans-serif;
+      }
+
+      .container {
+        width: min(1500px, 95%);
+        margin: 25px auto 50px;
+      }
+
+      /* =========================
+   HEADER
+========================= */
+
+      .header {
+        margin-bottom: 20px;
+      }
+
+      .header h1 {
+        margin: 0 0 7px;
+        font-size: 28px;
+      }
+
+      .header p {
+        margin: 0;
+        color: #6b7280;
+      }
+
+      /* =========================
+   MAIN CARD
+========================= */
+
+      .card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 300px;
+        resize: vertical;
+
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+
+        padding: 14px;
+
+        font-family: Consolas, Monaco, monospace;
+        font-size: 13px;
+        line-height: 1.55;
+
+        outline: none;
+      }
+
+      textarea:focus {
+        border-color: #2563eb;
+      }
+
+      /* =========================
+   BUTTONS
+========================= */
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 13px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 15px;
+
+        font-size: 13px;
+        font-weight: 600;
+
+        cursor: pointer;
+
+        transition: 0.15s;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        opacity: 0.9;
+      }
+
+      .primary {
+        background: #2563eb;
+        color: white;
+      }
+
+      .green {
+        background: #16a34a;
+        color: white;
+      }
+
+      .orange {
+        background: #ea580c;
+        color: white;
+      }
+
+      .red {
+        background: #dc2626;
+        color: white;
+      }
+
+      .dark {
+        background: #374151;
+        color: white;
+      }
+
+      .gray {
+        background: #e5e7eb;
+        color: #111827;
+      }
+
+      /* =========================
+   STATISTICS
+========================= */
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+
+        margin-bottom: 20px;
+      }
+
+      .stat {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+
+        padding: 15px;
+      }
+
+      .stat-label {
+        color: #6b7280;
+        font-size: 12px;
+        margin-bottom: 5px;
+      }
+
+      .stat-value {
+        font-size: 25px;
+        font-weight: 700;
+      }
+
+      /* =========================
+   DUPLICATE PANEL
+========================= */
+
+      .duplicate-panel {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+
+        border-radius: 12px;
+
+        padding: 15px;
+
+        margin-bottom: 20px;
+      }
+
+      .duplicate-panel h3 {
+        margin: 0 0 5px;
+      }
+
+      .duplicate-panel p {
+        margin: 0 0 12px;
+        color: #6b7280;
+      }
+
+      .duplicate-list {
+        max-height: 300px;
+        overflow: auto;
+
+        background: white;
+
+        border: 1px solid #fed7aa;
+        border-radius: 8px;
+
+        padding: 10px;
+
+        font-family: Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .duplicate-item {
+        padding: 7px 5px;
+        border-bottom: 1px solid #f3f4f6;
+      }
+
+      .duplicate-item:last-child {
+        border-bottom: 0;
+      }
+
+      .duplicate-count {
+        font-weight: bold;
+        color: #dc2626;
+      }
+
+      /* =========================
+   CATEGORY GRID
+========================= */
+
+      .results-grid {
+        display: grid;
+
+        grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+
+        gap: 18px;
+      }
+
+      /* =========================
+   CATEGORY CARD
+========================= */
+
+      .category {
+        background: white;
+
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+
+        overflow: hidden;
+      }
+
+      .category-header {
+        display: flex;
+
+        justify-content: space-between;
+        align-items: center;
+
+        padding: 12px 14px;
+
+        background: #f8fafc;
+
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .category-title {
+        font-weight: 700;
+      }
+
+      .category-count {
+        background: #2563eb;
+        color: white;
+
+        min-width: 28px;
+
+        text-align: center;
+
+        padding: 3px 8px;
+
+        border-radius: 20px;
+
+        font-size: 12px;
+      }
+
+      .category textarea {
+        min-height: 190px;
+
+        border: 0;
+
+        border-radius: 0;
+
+        display: block;
+      }
+
+      .category-actions {
+        padding: 10px 14px 14px;
+
+        display: flex;
+
+        gap: 7px;
+      }
+
+      .category-actions button {
+        flex: 1;
+      }
+
+      /* =========================
+   HIDDEN
+========================= */
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* =========================
+   TOAST
+========================= */
+
+      .toast {
+        position: fixed;
+
+        bottom: 25px;
+        right: 25px;
+
+        background: #111827;
+        color: white;
+
+        padding: 12px 17px;
+
+        border-radius: 8px;
+
+        font-size: 13px;
+
+        opacity: 0;
+
+        pointer-events: none;
+
+        transform: translateY(10px);
+
+        transition: 0.2s;
+
+        z-index: 999;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* =========================
+   MOBILE
+========================= */
+
+      @media (max-width: 700px) {
+        body {
+          padding: 0;
+        }
+
+        .container {
+          width: 94%;
+        }
+
+        .results-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .header h1 {
+          font-size: 23px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>URL Categorizer</h1>
+
+        <p>
+          Categorize URLs, detect duplicates, remove duplicates and shuffle
+          links.
+        </p>
+      </div>
+
+      <!-- =========================
+         INPUT
+    ========================== -->
+
+      <div class="card">
+        <textarea
+          id="inputText"
+          placeholder="Paste URLs here, one URL per line..."
+        ></textarea>
+
+        <div class="toolbar">
+          <button class="green" onclick="loadDemo()">Load Demo</button>
+
+          <button class="primary" onclick="processURLs()">
+            Categorize URLs
+          </button>
+
+          <button class="orange" onclick="removeDuplicates()">
+            Remove Duplicates
+          </button>
+
+          <button class="dark" onclick="shuffleInput()">Shuffle URLs</button>
+
+          <button class="gray" onclick="copyInput()">Copy Input</button>
+
+          <button class="red" onclick="clearAll()">Clear</button>
+        </div>
+      </div>
+
+      <!-- =========================
+         STATS
+    ========================== -->
+
+      <div id="stats" class="stats hidden"></div>
+
+      <!-- =========================
+         DUPLICATES
+    ========================== -->
+
+      <div id="duplicatePanel" class="duplicate-panel hidden">
+        <h3>Duplicate URLs</h3>
+
+        <p id="duplicateSummary"></p>
+
+        <div id="duplicateList" class="duplicate-list"></div>
+      </div>
+
+      <!-- =========================
+         RESULTS
+    ========================== -->
+
+      <div id="results" class="results-grid"></div>
+    </div>
+
+    <div id="toast" class="toast">Copied!</div>
+
+    <script>
+      /* =========================================================
+   CATEGORY NAMES
+========================================================= */
+
+      const categoryNames = {
+        other: "Other",
+
+        chineseHtml: "Chinese HTML",
+
+        pixelWebApp: "Pixel / Web.app",
+
+        journal: "Journal Blog",
+
+        boardTopic: "Board Topic",
+
+        forumTopic: "Forum Topic",
+
+        metaComment: "Meta Comment",
+
+        edu: "EDU",
+
+        gov: "GOV",
+
+        org: "ORG",
+
+        bloggerHtml: "Blogger HTML",
+      };
+
+      /* =========================================================
+   CREATE EMPTY CATEGORIES
+========================================================= */
+
+      function createCategories() {
+        return {
+          other: [],
+
+          chineseHtml: [],
+
+          pixelWebApp: [],
+
+          journal: [],
+
+          boardTopic: [],
+
+          forumTopic: [],
+
+          metaComment: [],
+
+          edu: [],
+
+          gov: [],
+
+          org: [],
+
+          bloggerHtml: [],
+        };
+      }
+
+      /* =========================================================
+   CATEGORIZE URLS
+========================================================= */
+
+      function categorizeLinks(inputText) {
+        const categories = createCategories();
+
+        const lines = inputText
+          .split(/\r?\n/)
+          .map(line => line.trim())
+          .filter(Boolean);
+
+        for (const link of lines) {
+          let url;
+
+          /* =========================
+           INVALID URL
+        ========================== */
+
+          try {
+            url = new URL(link);
+          } catch {
+            categories.other.push(link);
+
+            continue;
+          }
+          const hostname = url.hostname.toLowerCase();
+          const pathname = url.pathname.toLowerCase();
+          const search = url.search.toLowerCase();
+
+          /* =================================================
+   1. META COMMENT
+
+   IMPORTANT:
+   This comes FIRST.
+
+   A URL is Meta Comment when it matches EITHER of these
+   structural patterns:
+
+   A) It contains the query parameter:
+      ?commentId=anything
+
+      Examples:
+      ?commentId=123
+      ?commentid=123
+      ?COMMENTID=123
+
+   B) It uses an article-style path:
+      /post/article-slug
+      /single-post/article-slug
+
+      Examples:
+      https://example.com/post/my-article
+      https://example.com/single-post/my-article
+
+   IMPORTANT:
+   - The domain does NOT need to match.
+   - The article slug can be different.
+   - The slug can contain hyphens, numbers, Unicode, etc.
+   - /post/ and /single-post/ must be actual pathname segments.
+   - #comment-123 alone is NOT Meta Comment.
+   ================================================= */
+
+          // META COMMENT — commentId query parameter
+          const hasCommentId = [...url.searchParams.keys()].some(
+            key => key.toLowerCase() === "commentid",
+          );
+
+          // META COMMENT — article-style /post/ or /single-post/ path
+          const pathSegments = pathname.split("/").filter(Boolean);
+
+          const postSegmentIndex = pathSegments.findIndex(
+            segment => segment === "post" || segment === "single-post",
+          );
+
+          // /post/ or /single-post/ must have an article slug after it.
+          const hasArticlePostPath =
+            postSegmentIndex !== -1 &&
+            postSegmentIndex < pathSegments.length - 1 &&
+            pathSegments[postSegmentIndex + 1].length > 0;
+
+          if (hasCommentId || hasArticlePostPath) {
+            categories.metaComment.push(link);
+            continue;
+          }
+
+          /* =================================================
+   2. PIXEL / WEB.APP
+   ================================================= */
+
+          if (hostname.endsWith(".web.app")) {
+            categories.pixelWebApp.push(link);
+            continue;
+          }
+
+          /* =================================================
+   3. BOARD TOPIC
+
+   Examples:
+   /board/topic/
+   /board/board_topic/
+   ================================================= */
+
+          if (
+            pathname.includes("/board/topic/") ||
+            pathname.includes("/board/board_topic/")
+          ) {
+            categories.boardTopic.push(link);
+            continue;
+          }
+
+          /* =================================================
+   4. FORUM TOPIC
+   ================================================= */
+
+          if (pathname.includes("/forum/topic/")) {
+            categories.forumTopic.push(link);
+            continue;
+          }
+
+          /* =================================================
+           5. JOURNAL BLOG
+
+           Your examples include:
+
+           /blog/best-leather-bags
+           /blog/wool-jackets
+
+           /journal3/blog/post
+           /journal2/blog/post
+
+           /blog/journal-blog
+           /blog03/
+
+           So BLOG is part of Journal Blog.
+        ================================================= */
+
+          if (
+            pathname.includes("/journal3/") ||
+            pathname.includes("/journal2/") ||
+            pathname.includes("/journal/") ||
+            pathname.includes("journal-blog") ||
+            pathname.includes("journal_blog") ||
+            pathname.includes("/blog/") ||
+            pathname.startsWith("/blog") ||
+            pathname.includes("/blog03/") ||
+            pathname.includes("/blog02/") ||
+            pathname.includes("/blog01/")
+          ) {
+            categories.journal.push(link);
+
+            continue;
+          }
+
+          /* =================================================
+           6. EDU
+        ================================================= */
+
+          if (hostname.endsWith(".edu") || hostname.includes(".edu.")) {
+            categories.edu.push(link);
+
+            continue;
+          }
+
+          /* =================================================
+           7. GOV
+        ================================================= */
+
+          if (hostname.endsWith(".gov") || hostname.includes(".gov.")) {
+            categories.gov.push(link);
+
+            continue;
+          }
+
+          /* =================================================
+           8. ORG
+        ================================================= */
+
+          if (hostname.endsWith(".org") || hostname.includes(".org.")) {
+            categories.org.push(link);
+
+            continue;
+          }
+
+          /* =================================================
+           9. CHINESE HTML
+
+           ONLY:
+
+           /1.html
+           /12.html
+           /123.html
+           /123456.html
+
+           NOT:
+
+           /abc123.html
+           /article-123.html
+        ================================================= */
+
+          if (/\/\d+\.html$/i.test(pathname)) {
+            categories.chineseHtml.push(link);
+
+            continue;
+          }
+
+          /* =================================================
+           10. BLOGGER HTML
+
+           Any .html that was NOT numeric.html
+        ================================================= */
+
+          if (pathname.endsWith(".html")) {
+            categories.bloggerHtml.push(link);
+
+            continue;
+          }
+
+          /* =================================================
+           11. OTHER
+        ================================================= */
+
+          categories.other.push(link);
+        }
+
+        return categories;
+      }
+
+      /* =========================================================
+   PROCESS EVERYTHING
+========================================================= */
+
+      function processURLs() {
+        const input = document.getElementById("inputText").value;
+
+        if (!input.trim()) {
+          showToast("Please enter URLs first.");
+
+          return;
+        }
+
+        const categories = categorizeLinks(input);
+
+        displayResults(categories);
+
+        analyzeDuplicates(input);
+      }
+
+      /* =========================================================
+   DISPLAY RESULTS
+========================================================= */
+
+      function displayResults(categories) {
+        const results = document.getElementById("results");
+
+        results.innerHTML = "";
+
+        for (const key in categories) {
+          const links = categories[key];
+
+          const card = document.createElement("div");
+
+          card.className = "category";
+
+          card.innerHTML = `
+
+            <div class="category-header">
+
+                <div class="category-title">
+                    ${categoryNames[key]}
+                </div>
+
+                <div class="category-count">
+                    ${links.length}
+                </div>
+
+            </div>
+
+
+            <textarea
+                id="output-${key}"
+                readonly
+            >${escapeHtml(links.join("\n"))}</textarea>
+
+
+            <div class="category-actions">
+
+                <button
+                    class="dark"
+                    onclick="copyCategory('${key}')"
+                >
+                    Copy
+                </button>
+
+
+                <button
+                    class="gray"
+                    onclick="shuffleCategory('${key}')"
+                >
+                    Shuffle
+                </button>
+
+            </div>
+
+        `;
+
+          results.appendChild(card);
+        }
+
+        updateStats(categories);
+      }
+
+      /* =========================================================
+   UPDATE STATISTICS
+========================================================= */
+
+      function updateStats(categories) {
+        const stats = document.getElementById("stats");
+
+        let total = 0;
+
+        for (const key in categories) {
+          total += categories[key].length;
+        }
+
+        const inputLines = getInputLines();
+
+        const unique = new Set(inputLines).size;
+
+        const duplicateEntries = inputLines.length - unique;
+
+        stats.classList.remove("hidden");
+
+        stats.innerHTML = `
+
+        <div class="stat">
+
+            <div class="stat-label">
+                Total URLs
+            </div>
+
+            <div class="stat-value">
+                ${total}
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-label">
+                Unique URLs
+            </div>
+
+            <div class="stat-value">
+                ${unique}
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-label">
+                Duplicate Entries
+            </div>
+
+            <div class="stat-value">
+                ${duplicateEntries}
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-label">
+                Categories
+            </div>
+
+            <div class="stat-value">
+                ${Object.keys(categories).length}
+            </div>
+
+        </div>
+
+    `;
+      }
+
+      /* =========================================================
+   DUPLICATE ANALYSIS
+========================================================= */
+
+      function analyzeDuplicates(inputText) {
+        const lines = inputText
+          .split(/\r?\n/)
+          .map(x => x.trim())
+          .filter(Boolean);
+
+        const counts = new Map();
+
+        for (const link of lines) {
+          counts.set(link, (counts.get(link) || 0) + 1);
+        }
+
+        const duplicates = [...counts.entries()].filter(
+          ([link, count]) => count > 1,
+        );
+
+        const panel = document.getElementById("duplicatePanel");
+
+        const summary = document.getElementById("duplicateSummary");
+
+        const list = document.getElementById("duplicateList");
+
+        if (duplicates.length === 0) {
+          panel.classList.remove("hidden");
+
+          summary.textContent = "No duplicate URLs found.";
+
+          list.innerHTML = "<div>No duplicates.</div>";
+
+          return;
+        }
+
+        panel.classList.remove("hidden");
+
+        const duplicateEntries = duplicates.reduce(
+          (total, item) => total + item[1] - 1,
+          0,
+        );
+
+        summary.textContent = `${duplicates.length} unique URLs are duplicated, creating ${duplicateEntries} duplicate entries.`;
+
+        list.innerHTML = "";
+
+        duplicates.forEach(([link, count]) => {
+          const item = document.createElement("div");
+
+          item.className = "duplicate-item";
+
+          item.innerHTML = `
+
+                <span class="duplicate-count">
+                    ${count}×
+                </span>
+
+                &nbsp;
+
+                ${escapeHtml(link)}
+
+            `;
+
+          list.appendChild(item);
+        });
+      }
+
+      /* =========================================================
+   REMOVE DUPLICATES BY DOMAIN / WEBSITE
+
+   IMPORTANT:
+   - Removes duplicate WEBSITES, not only duplicate URLs.
+   - Keeps the FIRST URL found for each unique domain.
+   - www.example.com and example.com are treated as the same website.
+   - http and https are treated as the same website.
+   - Different pages on the same domain are duplicates.
+   - Subdomains remain separate (blog.example.com != example.com).
+========================================================= */
+
+      function getDomainKey(link) {
+        try {
+          const url = new URL(link.trim());
+
+          // hostname excludes protocol, path, query, hash and port.
+          // Remove www. so www.example.com and example.com match.
+          return url.hostname.toLowerCase().replace(/^www\./, "");
+        } catch {
+          // Invalid URLs are kept individually.
+          return null;
+        }
+      }
+
+      function removeDuplicates() {
+        const lines = getInputLines();
+
+        if (!lines.length) {
+          showToast("No URLs to process.");
+          return;
+        }
+
+        const seenDomains = new Set();
+        const unique = [];
+        let removedCount = 0;
+
+        for (const link of lines) {
+          const domain = getDomainKey(link);
+
+          // Keep invalid lines individually.
+          if (!domain) {
+            unique.push(link);
+            continue;
+          }
+
+          // Keep only the FIRST URL belonging to each domain.
+          if (!seenDomains.has(domain)) {
+            seenDomains.add(domain);
+            unique.push(link);
+          } else {
+            removedCount++;
+          }
+        }
+
+        // Replace the input with one URL per unique domain.
+        document.getElementById("inputText").value = unique.join("\n");
+
+        // Re-categorize and refresh the duplicate panel/statistics.
+        processURLs();
+
+        if (removedCount === 0) {
+          showToast("No duplicate domains found.");
+        } else {
+          showToast(`${removedCount} duplicate domain URLs removed.`);
+        }
+      }
+
+      /* =========================================================
+   SHUFFLE INPUT
+========================================================= */
+
+      function shuffleInput() {
+        const lines = getInputLines();
+
+        if (!lines.length) {
+          showToast("No URLs to shuffle.");
+
+          return;
+        }
+
+        shuffleArray(lines);
+
+        document.getElementById("inputText").value = lines.join("\n");
+
+        processURLs();
+
+        showToast("URLs shuffled.");
+      }
+
+      /* =========================================================
+   SHUFFLE CATEGORY
+========================================================= */
+
+      function shuffleCategory(category) {
+        const textarea = document.getElementById("output-" + category);
+
+        if (!textarea || !textarea.value.trim()) {
+          showToast("This category is empty.");
+
+          return;
+        }
+
+        const links = textarea.value.split(/\r?\n/).filter(Boolean);
+
+        shuffleArray(links);
+
+        textarea.value = links.join("\n");
+
+        showToast(categoryNames[category] + " shuffled.");
+      }
+
+      /* =========================================================
+   FISHER-YATES SHUFFLE
+========================================================= */
+
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+      }
+
+      /* =========================================================
+   COPY CATEGORY
+========================================================= */
+
+      function copyCategory(category) {
+        const textarea = document.getElementById("output-" + category);
+
+        if (!textarea || !textarea.value) {
+          showToast("Category is empty.");
+
+          return;
+        }
+
+        copyText(textarea.value);
+      }
+
+      /* =========================================================
+   COPY INPUT
+========================================================= */
+
+      function copyInput() {
+        const input = document.getElementById("inputText");
+
+        if (!input.value.trim()) {
+          showToast("Input is empty.");
+
+          return;
+        }
+
+        copyText(input.value);
+      }
+
+      /* =========================================================
+   COPY TEXT
+========================================================= */
+
+      function copyText(text) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            showToast("Copied!");
+          })
+          .catch(() => {
+            const textarea = document.createElement("textarea");
+
+            textarea.value = text;
+
+            document.body.appendChild(textarea);
+
+            textarea.select();
+
+            document.execCommand("copy");
+
+            textarea.remove();
+
+            showToast("Copied!");
+          });
+      }
+
+      /* =========================================================
+   GET INPUT LINES
+========================================================= */
+
+      function getInputLines() {
+        return document
+          .getElementById("inputText")
+          .value.split(/\r?\n/)
+          .map(x => x.trim())
+          .filter(Boolean);
+      }
+
+      /* =========================================================
+   CLEAR EVERYTHING
+========================================================= */
+
+      function clearAll() {
+        document.getElementById("inputText").value = "";
+
+        document.getElementById("results").innerHTML = "";
+
+        document.getElementById("stats").innerHTML = "";
+
+        document.getElementById("stats").classList.add("hidden");
+
+        document.getElementById("duplicatePanel").classList.add("hidden");
+
+        document.getElementById("duplicateList").innerHTML = "";
+
+        showToast("Cleared.");
+      }
+
+      /* =========================================================
+   LOAD YOUR DEMO
+========================================================= */
+
+      function loadDemo() {
+        const demo = `https://www.chaoqgroup.com/blog/best-leather-bags
+https://fotobravo.com/blog/wool-jackets
+https://bermuuda.ee/index.php?route=journal3/blog/post&journal_blog_post_id=10
+https://www.activeforall.co.in/blog/journal-blog
+https://yansitici.com.tr/blog/journal-blog
+https://kunaecuador.org/blog03/#comment-237410
+https://antivirus.co.tz/blog/journal-blog-is-here
+http://manami-shop.ru/index.php?route=journal2/blog/post&journal_blog_category_id=2&journal_blog_post_id=6
+https://metal-san.com.tr/blog/wool-jackets
+https://www.jeffberkes.com/blog/2025/1/real-time-quadrantid-meteors
+
+https://www.thegreatblight.com/post/10-reasons-you-ll-love-d%C3%B3nal-finn-in-the-wheel-of-time?commentId=932deb0a-e04a-4212-83de-7146c2b12153
+https://www.goodstone.com/post/uncovering-the-rich-history-of-goodstone-inn?commentId=b69b1cdb-c663-4ee3-b5ca-490aee8dc99e
+https://www.winsyyc.ca/post/momfound-intentional-care?commentId=47063c68-5860-41d7-9f3a-91f7755717bd
+https://www.rejuvapennxt.com/post/basics-of-under-eye-microneedling?commentId=4409b38b-828d-4251-a87f-1f29524db9ac
+https://www.ibizaboatclub.com/post/the-perfect-day-trip-to-formentera-sun-sea-and-simplicity?commentId=29622ece-93a6-45d3-841b-a3680bc0fce7
+https://www.totallyreliable.com/post/pc-mac-v2-02-02-update-and-macos-release?commentId=8db1e0d3-7b91-4d18-ba01-90a912063a38
+https://www.bobbymaximus.com/post/5-simple-rules-for-fat-loss?commentId=90d688e3-af44-41ea-b802-72b13a4b1bd5
+https://www.plumlinenursery.com/post/bring-curb-appeal-with-conifers?commentId=9d42d51d-29fb-4740-a789-70a56654f8b3
+https://www.amper.ag/post/os-dados-que-nao-aparecem-nos-stories-o-formato-queridinho-do-instagram-infografico?commentId=6592f924-9284-4a7a-8427-fd43cbc87990
+https://www.baytalfann.com/post/the-philosophy-of-geometry?commentId=d7cfb68b-cd1a-49b9-8dee-aae2f6b58f97
+https://www.barleycorns.com/post/template-product-review-14?commentId=1bf8f84c-9b0c-4bd7-9f5f-9ea1ca1dbdce
+https://www.huntsmanmarine.ca/post/dispatch-6-there-s-a-fur-seal-in-my-quadrat?commentId=bfa51fc9-c825-4549-ba62-b737fc51c649
+https://www.shopkirana.com/post/design-a-stunning-blog?commentId=ff7fb0e6-dd0b-4bb7-89bd-72bc5757672b
+https://example.com/post/simple-article-title
+https://another-example.org/single-post/another-article-title
+
+https://example.com/123.html
+https://example.com/456789.html
+https://example.com/article-name.html
+
+https://test-site.web.app/?topic=ABC123XYZ
+https://another-site.web.app/?topic=987654
+
+https://example.com/forum/topic/64758/test-topic
+https://example.com/board/board_topic/8097541/8735013.htm
+
+https://example.edu/news/example
+https://example.gov/official/news
+https://example.org/about-us
+
+https://example.com/123.html
+https://example.com/123.html
+https://example.com/article-name.html`;
+
+        document.getElementById("inputText").value = demo;
+
+        processURLs();
+      }
+
+      /* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+      function escapeHtml(text) {
+        return text
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      /* =========================================================
+   TOAST
+========================================================= */
+
+      let toastTimer;
+
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+
+        toast.textContent = message;
+
+        toast.classList.add("show");
+
+        clearTimeout(toastTimer);
+
+        toastTimer = setTimeout(() => {
+          toast.classList.remove("show");
+        }, 1800);
+      }
+
+      /* =========================================================
+   LOAD DEMO AUTOMATICALLY
+========================================================= */
+
+      window.addEventListener("DOMContentLoaded", () => {
+        loadDemo();
+      });
+    </script>
+  </body>
+</html>
